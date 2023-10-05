@@ -2,7 +2,6 @@ from pydub import AudioSegment
 import os
 
 def split_audio_using_segments(audio_file, segments_file, output_folder):
-    # 加载音频文件
     audio = AudioSegment.from_wav(audio_file)
     
     with open(segments_file, 'r') as f:
