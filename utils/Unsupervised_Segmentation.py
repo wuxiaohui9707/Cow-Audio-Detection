@@ -5,8 +5,9 @@ import scipy.io.wavfile as wavfile
 import numpy as np
 import IPython
 import sklearn.cluster
+import os
 
-def Unsupervised_segmentation(input_audio, mt_size=1, mt_step=0.5, st_win=0.1, n_clusters=6):
+def Unsupervised_segmentation(input_audio, output_folder,mt_size=1, mt_step=0.5, st_win=0.1, n_clusters=6):
     fs, s = aIO .read_audio_file(input_audio)
     [mt_feats, st_feats, _] = mT(s, fs, mt_size * fs, mt_step * fs,
                             round(fs * st_win), round(fs * st_win * 0.5))
@@ -26,6 +27,7 @@ def Unsupervised_segmentation(input_audio, mt_size=1, mt_step=0.5, st_win=0.1, n
                 x_clusters[sp] = np.append(x_clusters[sp], cur_x)
                 x_clusters[sp] = np.append(x_clusters[sp], np.zeros((fs,)))
         # write cluster's signal into a WAV file
-        print(f'cluster {sp}: {count_cl} segments {len(x_clusters[sp])/float(fs)} sec total dur')        
-        wavfile.write(f'cluster_{sp}.wav', fs, np.int16(x_clusters[sp]))
-        IPython.display.display(IPython.display.Audio(f'cluster_{sp}.wav'))
+        output_file_path = os.path.join(output_folder, f'cluster_{sp}.wav')  # 使用os.path.join来生成完整路径
+        print(f'cluster {sp}: {count_cl} segments {len(x_clusters[sp]) / float(fs)} sec total dur')
+        wavfile.write(output_file_path, fs, np.int16(x_clusters[sp]))
+        IPython.display.display(IPython.display.Audio(output_file_path))
