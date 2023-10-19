@@ -6,10 +6,10 @@ import os
 import shutil
 
 def detection_and_classification(audio_file,output_folder,model_name,model_type,smooth_window = 0.1, weight = 0.05):
-    [fs, s] = aIO.read_audio_file(audio_file )# get audio signal and sample rate
-    segments = aS.silence_removal(s, fs, 0.05, 0.05, smooth_window, weight, plot = True)
-    #print(segments)
-    SA.split_audio_using_segments(audio_file,segments,output_folder)#split audio according to segments
+    [fs, s] = aIO.read_audio_file(audio_file )
+    segments = aS.silence_removal(s, fs, 0.05, 0.05, smooth_window, weight, plot = True)#优化st_w,st_s
+    print(segments)
+    SA.split_audio_using_segments(audio_file,segments,output_folder)
     files_to_test = [os.path.join(output_folder, file) for file in os.listdir(output_folder) if file.endswith(".wav")]
     for f in files_to_test:
         print(f'{f}:')
