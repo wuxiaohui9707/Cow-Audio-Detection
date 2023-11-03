@@ -1,0 +1,20 @@
+Databases:
+  My_datasets_specified: /mnt/e/Files/Acoustic_Data/Datasets_specified/audio/{uri}.wav
+
+Protocols:
+
+  My_datasets_specified:
+    SpeakerDiarization:
+      Detection:
+        train:
+            uri: /mnt/e/Files/Acoustic_Data/Datasets_specified/lists/train.meetings.txt
+            annotation: /mnt/e/Files/Acoustic_Data/Datasets_specified/rttms/train/{uri}.rttm
+            annotated: /mnt/e/Files/Acoustic_Data/Datasets_specified/uems/train/{uri}.uem
+        development:
+            uri: /mnt/e/Files/Acoustic_Data/Datasets_specified/lists/dev.meetings.txt
+            annotation: /mnt/e/Files/Acoustic_Data/Datasets_specified/rttms/dev/{uri}.rttm
+            annotated: /mnt/e/Files/Acoustic_Data/Datasets_specified/uems/dev/{uri}.uem
+        test:
+            uri: /mnt/e/Files/Acoustic_Data/Datasets_specified/lists/test.meetings.txt
+            annotation: /mnt/e/Files/Acoustic_Data/Datasets_specified/rttms/test/{uri}.rttm
+            annotated: /mnt/e/Files/Acoustic_Data/Datasets_specified/uems/test/{uri}.uem
