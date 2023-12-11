@@ -1,6 +1,8 @@
 import os, torch
 from pyannote.database import get_protocol, FileFinder, registry
 from pyannote.audio import Model, Inference
+from pyannote.audio.core.task import Resolution, Problem, Specifications
+from pyannote.audio.models.segmentation import PyanNet
 from pyannote.audio.tasks import MultiLabelSegmentation as MLS_T
 from pyannote.audio.pipelines import MultiLabelSegmentation as MLS_P
 import Probability as Prob
@@ -22,17 +24,52 @@ class CowAudioAnalyzer:
         self.protocol = get_protocol('My_datasets.Segmentation.Classification', 
                                      preprocessors={"audio": FileFinder()})
 
+    def load_original_model(self, sincnet_params=None, lstm_params=None, linear_params=None, sample_rate=16000, num_channels=1, classes=None):
+        self.model = PyanNet(sincnet=sincnet_params, 
+                             lstm=lstm_params, 
+                             linear=linear_params, 
+                             sample_rate=sample_rate, 
+                             num_channels=num_channels)
+        self.classes = classes
+        self.model.specifications = Specifications(
+            classes=classes,
+            problem=Problem.MULTI_LABEL_CLASSIFICATION,
+            resolution=Resolution.FRAME,
+            duration=None,
+            min_duration=None,
+            warm_up=None
+        )
+
     def load_pretrained_model(self,classes):
         self.classes = classes
         self.model = Model.from_pretrained(self.model_name)
-        self.model.specifications.classes = classes
-
-    def setup_task(self, duration=1.5, batch_size=32):
-        task = MLS_T(
-            self.protocol, duration=duration, batch_size=batch_size,
-            classes=self.classes
+        self.model.specifications = Specifications(
+            classes=classes,
+            problem=Problem.MULTI_LABEL_CLASSIFICATION,
+            resolution=Resolution.FRAME,
+            duration=None,
+            min_duration=None,
+            warm_up=None
         )
-        self.model.task = task
+
+    def setup_task(self, duration=2.0, warm_up=0.0, balance=None, weight=None, 
+                   batch_size=32, num_workers=None, pin_memory=False, 
+                   augmentation=None, metric=None):
+        # 创建 MultiLabelSegmentation 任务实例
+        self.task = MLS_T(
+            protocol=self.protocol,
+            classes=self.classes, 
+            duration=duration,
+            warm_up=warm_up,
+            balance=balance,
+            weight=weight,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            augmentation=augmentation,
+            metric=metric
+        )
+        self.model.task = self.task
         self.model.to('cuda')
 
     def train_model(self, max_epochs=100):
