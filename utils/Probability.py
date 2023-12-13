@@ -6,10 +6,11 @@ def save_probabilities(model, audio_file, audio_duration, start_time, end_time, 
     计算并保存特定时间段内的概率数据到文本文件。
 
     :param model: 使用的模型。
-    :param audio_file_path: 音频文件路径。
+    :param audio_file: 音频文件。
     :param audio_duration: 音频文件的时长（秒）。
     :param start_time: 开始时间（秒）。
     :param end_time: 结束时间（秒）。
+    :param window_duration: 滑动窗口时长（秒）。
     :param step: 步长（秒）。
     :param file_name: 输出文件名。
     """
