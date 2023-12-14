@@ -2,6 +2,7 @@ import os, torch
 from pyannote.database import get_protocol, FileFinder, registry
 from pyannote.audio import Model, Inference
 from pyannote.audio.core.task import Resolution, Problem, Specifications
+from pyannote.audio.utils.metric import MacroAverageFMeasure
 from pyannote.audio.models.segmentation import PyanNet
 from pyannote.audio.tasks import MultiLabelSegmentation as MLS_T
 from pyannote.audio.pipelines import MultiLabelSegmentation as MLS_P
@@ -9,14 +10,15 @@ import numpy as np
 import pytorch_lightning as pl
 
 class CowAudioAnalyzer:
-    def __init__(self, database_path, output_dir, model_name="pyannote/segmentation"):
+###数据准备###
+    def __init__(self, database_path, output_dir, protocol, model_name="pyannote/segmentation"):
         self.database_path = database_path
         self.output_dir = output_dir
         self.model_name = model_name
         self.classes = None
         self.model = None
         self.pipeline = None
-        self.protocol = None
+        self.protocol = protocol
 
     def load_dataset(self):
         registry.load_database(self.database_path)
@@ -24,6 +26,7 @@ class CowAudioAnalyzer:
         self.protocol = get_protocol('My_datasets.Segmentation.Classification', 
                                      preprocessors={"audio": FileFinder()})
 
+###模型加载、训练、保存等###
     def load_original_model(self, sincnet_params=None, lstm_params=None, linear_params=None, sample_rate=16000, num_channels=1, classes=None):
         self.model = PyanNet(sincnet=sincnet_params, 
                              lstm=lstm_params, 
@@ -97,6 +100,7 @@ class CowAudioAnalyzer:
         trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=max_epochs, default_root_dir=self.output_dir)
         trainer.fit(self.model)  # 继续训练
 
+###推理和预测###
     def run_inference(self, audio_file, window="sliding", duration=None, 
                              step=None, pre_aggregation_hook=None, 
                              skip_aggregation=False, skip_conversion=False, 
@@ -170,6 +174,7 @@ class CowAudioAnalyzer:
 
         print(f"Data saved to {file_name}")
 
+###pipeline###
     def setup_pipeline(self, initial_params, fscore=False, share_min_duration=False, use_auth_token=None, **inference_kwargs):
         self.pipeline = MLS_P(
             segmentation=self.model,
@@ -178,6 +183,24 @@ class CowAudioAnalyzer:
             use_auth_token=use_auth_token,
             **inference_kwargs
         ).instantiate(initial_params)
+
+    def evaluate_performance(self, pipeline):
+        # 初始化评估指标
+        metric = MacroAvezrageFMeasure(classes=self.classes)
+
+        # 遍历测试数据
+        for test_file in self.protocol.test():
+            # 从测试文件中获取真实标注
+            reference = test_file['annotation']
+
+            # 使用pipeline处理测试文件，获取预测结果
+            hypothesis = pipeline(test_file)
+
+            # 更新评估指标
+            metric(reference, hypothesis)
+
+        # 计算并返回最终指标值
+        return abs(metric)
 
     def run_segmentation(self, audio_file):
         return self.pipeline(audio_file)
